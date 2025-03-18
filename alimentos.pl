@@ -1,14 +1,11 @@
-% Red Semántica de Alimentos en Prolog
-% Cumple con altos estándares según la rúbrica del taller 6
-
-% Definición de la jerarquía de alimentos
-es_un(alimento, entidad).
+es_un(alimento, superclase).
 
 es_un(fruta, alimento).
-es_un(vegetal, alimento).
+es_un(verdura, alimento).
 es_un(carne, alimento).
 es_un(lacteo, alimento).
-es_un(cereal, alimento).
+es_un(grano, alimento).
+es_un(aceite, alimento).
 
 % Subcategorías de alimentos
 es_un(manzana, fruta).
@@ -22,16 +19,16 @@ es_un(mango, fruta).
 es_un(papaya, fruta).
 es_un(cereza, fruta).
 
-es_un(lechuga, vegetal).
-es_un(zanahoria, vegetal).
-es_un(brocoli, vegetal).
-es_un(espinaca, vegetal).
-es_un(tomate, vegetal).
-es_un(papa, vegetal).
-es_un(cebolla, vegetal).
-es_un(pepino, vegetal).
-es_un(pimiento, vegetal).
-es_un(remolacha, vegetal).
+es_un(lechuga, verdura).
+es_un(zanahoria, verdura).
+es_un(brocoli, verdura).
+es_un(espinaca, verdura).
+es_un(tomate, verdura).
+es_un(papa, verdura).
+es_un(cebolla, verdura).
+es_un(pepino, verdura).
+es_un(pimiento, verdura).
+es_un(remolacha, verdura).
 
 es_un(pollo, carne).
 es_un(res, carne).
@@ -55,16 +52,16 @@ es_un(cuajada, lacteo).
 es_un(nata, lacteo).
 es_un(ricotta, lacteo).
 
-es_un(arroz, cereal).
-es_un(trigo, cereal).
-es_un(avena, cereal).
-es_un(maiz, cereal).
-es_un(cebada, cereal).
-es_un(centeno, cereal).
-es_un(quinua, cereal).
-es_un(amaranto, cereal).
-es_un(mijo, cereal).
-es_un(sorgo, cereal).
+es_un(arroz, grano).
+es_un(trigo, grano).
+es_un(avena, grano).
+es_un(maiz, grano).
+es_un(cebada, grano).
+es_un(centeno, grano).
+es_un(quinua, grano).
+es_un(amaranto, grano).
+es_un(mijo, grano).
+es_un(sorgo, grano).
 
 % Instancias
 inst(golden, manzana).
@@ -122,30 +119,39 @@ inst(wild, arroz).
 inst(verde, arroz).
 inst(multigrano, arroz).
 
-% Propiedades heredadas
-prop(alimento, energia, alta).
-prop(fruta, carbohidratos, altos).
-prop(vegetal, fibra, alta).
-prop(carne, proteinas, altas).
-prop(lacteo, calcio, alto).
-prop(cereal, energia, alta).
+% Macronutrientes por superclase
+tiene(alimento, [carbohidratos, proteinas, grasas]).
 
-% Consultas posibles
-tiene_propiedad(X, P, V) :- prop(X, P, V).
-tiene_propiedad(X, P, V) :- es_un(X, Y), tiene_propiedad(Y, P, V).
+tiene(fruta, [carbohidratos, bajas grasas, bajas proteinas]).
+tiene(carne, [altas proteinas, bajas grasas, sin carbohidratos]).
+tiene(aceite, [altas grasas, sin proteinas, sin carbohidratos]).
+tiene(verdura, [carbohidratos, bajas proteinas, bajas grasas]).
+tiene(grano, [altos carbohidratos, bajas grasas, bajas proteinas]).
+tiene(lacteo, [proteinas, grasas, carbohidratos]).
 
-% Función para mostrar la jerarquía completa
-mostrarCategorias :-
-    forall(es_un(X, Y), format('~w es un(a) ~w~n', [X, Y])).
+% Reglas para asignar macronutrientes según categoría
+tiene_macronutriente(Alimento, proteinas) :- es_un(Alimento, carne).
+tiene_macronutriente(Alimento, carbohidratos) :- es_un(Alimento, grano).
+tiene_macronutriente(Alimento, grasas) :- es_un(Alimento, aceite).
+tiene_macronutriente(Alimento, carbohidratos) :- es_un(Alimento, fruta).
+tiene_macronutriente(Alimento, carbohidratos) :- es_un(Alimento, verdura).
+tiene_macronutriente(Alimento, proteinas) :- es_un(Alimento, lacteo).
+tiene_macronutriente(Alimento, grasas) :- es_un(Alimento, lacteo).
+no_tiene_macronutriente(Alimento, Nutriente) :- \+ tiene_macronutriente(Alimento, Nutriente).
 
-% Función para listar todas las instancias de una clase
-listarEjemplos(C) :-
-    forall(inst(X, C), format('~w es una instancia de ~w~n', [X, C])).
+% Reglas para heredar categorías
+es_un_2(X, Y) :- es_un(X, Y).
+es_un_2(X, Y) :- es_un(X, Z), es_un_2(Z, Y).
+hereda_macronutriente(Instancia, Nutriente) :- es_un_2(Instancia, Categoria), tiene_macronutriente(Categoria, Nutriente).
 
-% Función para mostrar todas las propiedades de una categoría o instancia
-verPropiedades(X) :-
-    forall(tiene_propiedad(X, P, V), format('~w tiene ~w: ~w~n', [X, P, V])).
-
-% Función para listar todos los alimentos que comparten un macronutriente específico
-buscarPorNutriente(P, V) :-
-    forall(tiene_propiedad(X, P, V), format('~w tiene ~w: ~w~n', [X, P, V])).
+%posibles busquedas
+%?- es_un(pollo, carne).
+%?- inst(parmesano, X).
+%?- es_un_2(salmon, alimento).
+%?- tiene(carne, X).
+%?- tiene_macronutriente(pollo, proteinas).
+%?- tiene_macronutriente(X, proteinas).
+%?- no_tiene_macronutriente(pollo, carbohidratos).
+%?- hereda_macronutriente(salmon, X).
+%?- es_un(X, Y).
+%?- es_un_2(X, alimento).
